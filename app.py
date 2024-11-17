@@ -4,10 +4,10 @@ import requests
 import os
 import json
 import time
-from dotenv import load_dotenv
+
 
 # Carregar variáveis de ambiente do arquivo .env
-load_dotenv()
+
 
 
 # Variáveis Globais e Configurações
