@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar e Publicar Mídia</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .media-record {
+            border: 1px solid #007bff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .media-actions {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <form method="GET" action="{{ url_for('carrocel') }}">
+            <button type="submit" class="btn btn-info mb-3">Criar Carrocel</button>
+        </form>
+        <br>
+        <h1>Criar e Publicar Mídia</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="alert alert-{{ messages[0][0] }}">
+            {{ messages[0][1] }}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Formulário para criação de mídia -->
+        <form method="POST" action="/">
+            <div class="form-group">
+                <label for="conta">Conta</label>
+                <select class="form-control" id="conta" name="conta" required>
+                    <option value="17841401531671783">Principal</option>
+                    <option value="17841463963815604">Royal X</option>
+                    <option value="17841470729686161">Empreendedor Do Futuro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="media_type">Tipo de Mídia</label>
+                <select class="form-control" id="media_type" name="media_type" required>
+                    <option value="image">Imagem</option>
+                    <option value="video">Vídeo</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="media_url">URL da Mídia</label>
+                <input type="url" class="form-control" id="media_url" name="media_url"
+                    placeholder="Digite a URL da mídia" required>
+            </div>
+            <div class="form-group">
+                <label for="caption">Legenda</label>
+                <input type="text" class="form-control" id="caption" name="caption" placeholder="Digite a legenda"
+                    required>
+            </div>
+            <div class="form-group">
+                <label for="hashtags">Hashtags</label>
+                <input type="text" class="form-control" id="hashtags" name="hashtags" placeholder="Adicione hashtags">
+            </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="hide_likes" name="hide_likes">
+                <label class="form-check-label" for="hide_likes">Ocultar Curtidas</label>
+            </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="hide_comments" name="hide_comments">
+                <label class="form-check-label" for="hide_comments">Ocultar Comentários</label>
+            </div>
+            <div class="form-group">
+                <label for="description">Descrição</label>
+                <textarea class="form-control" id="description" name="description" rows="3"
+                    placeholder="Descrição adicional (opcional)"></textarea>
+            </div>
+            <button type="submit" name="action" value="create" class="btn btn-primary">Criar Mídia</button>
+        </form>
+
+        <hr>
+
+        <!-- Listar mídias criadas -->
+        <h3>Mídias Criadas</h3>
+        {% for media in created_media_records %}
+        <div class="media-record">
+            <div>
+                <h5>ID: {{ media['id'] }}</h5> <!-- Exibe o ID da mídia -->
+                <p><strong>Conta:</strong> {{ media['conta'] }}</p>
+                <p><strong>Descrição:</strong> {{ media['description'] }}</p> <!-- Exibe a descrição da mídia -->
+                <p><strong>Tipo:</strong> {{ media['type'] }}</p> <!-- Exibe o tipo da mídia (imagem ou vídeo) -->
+                <p><strong>Legenda:</strong> {{ media['caption'] }}</p> <!-- Exibe a legenda da mídia -->
+                <p><strong>Hashtags:</strong> {{ media['hashtags'] }}</p>
+            </div>
+            <div class="media-actions">
+                <!-- Passando tanto o media_id quanto o conta para a URL -->
+                <form method="POST" action="{{ url_for('publish_media', media_id=media['id'], conta=media['conta']) }}">
+                    <button type="submit" class="btn btn-success">Publicar</button>
+                </form>
+                <form method="POST" action="{{ url_for('delete_media', media_id=media['id']) }}">
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+        <!-- Botão para publicar todas as mídias -->
+        <form action="{{ url_for('publish_all_media') }}" method="POST">
+            <button type="submit" class="btn btn-warning mb-3">Publicar Todas as Mídias</button>
+        </form>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+        }
+        #uploadForm {
+            margin-bottom: 20px;
+        }
+        #imageLink {
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload an Image</h1>
+        <form id="uploadForm">
+            <input type="file" id="fileInput" name="file" accept="image/*" required>
+            <button type="submit">Upload</button>
+        </form>
+        <div id="imageLink">
+            <p>Image uploaded! Access it here:</p>
+            <a id="link" href="#" target="_blank">View Image</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').onsubmit = async function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    const link = document.getElementById('link');
+                    link.href = result.image_url;
+                    link.innerText = result.image_url;
+
+                    document.getElementById('imageLink').style.display = 'block';
+                } else {
+                    alert(result.error || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while uploading the image.');
+            }
+        };
+    </script>
+</body>
+</html>
