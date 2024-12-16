@@ -497,5 +497,6 @@ def publicar_todos_carroceis():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-    """ app.run(host='127.0.0.1', port=port, debug=True) """
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    host = '127.0.0.1' if debug_mode else '0.0.0.0'
+    app.run(host=host, port=port, debug=debug_mode)
