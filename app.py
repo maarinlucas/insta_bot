@@ -6,15 +6,9 @@ import json
 import time
 
 
-# Carregar variáveis de ambiente do arquivo .env
 
 
-
-# Variáveis Globais e Configurações
-
-
-
-IDS_FILE = os.getenv('IDS_FILE', 'ids.json')  # Padrão: ids.json
+IDS_FILE = os.getenv('IDS_FILE', 'ids.json')  
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 CONTA_PRINCIPAL = os.getenv('CONTA_PRINCIPAL')
 ROYAL_X = os.getenv('ROYAL_X')
@@ -25,26 +19,26 @@ app.secret_key = os.getenv('SECRET_KEY')
 
 created_media_records = []
 
-# Helper Functions
+
 def load_ids():
-    """Load saved IDs from the JSON file."""
+   
     if os.path.exists(IDS_FILE):
         with open(IDS_FILE, "r") as file:
             return json.load(file)
     return []
 
 def save_ids(ids):
-    """Save IDs to the JSON file."""
+   
     with open(IDS_FILE, "w") as file:
         json.dump(ids, file)
 
 def clear_ids():
-    """Clear the JSON file."""
+    
     if os.path.exists(IDS_FILE):
         os.remove(IDS_FILE)
 
 def retry_request(url, data, max_retries=3, delay=2):
-    """Retry HTTP POST requests on transient errors."""
+   
     for attempt in range(max_retries):
         response = requests.post(url, data=data)
         if response.status_code == 200:
@@ -54,7 +48,7 @@ def retry_request(url, data, max_retries=3, delay=2):
     return response
 
 def get_account_id(account_name):
-    """Map account name to account ID."""
+    
     return {
         'Principal': CONTA_PRINCIPAL,
         'Royal X': ROYAL_X,
@@ -62,13 +56,19 @@ def get_account_id(account_name):
     }.get(account_name)
     
 def get_account_name(account_id):
-    """Map account ID to account name."""
+   
     return {
         '17841401531671783': 'Principal',
         '17841463963815604': 'Royal X',
         '17841470729686161': 'Empreendedor Do Futuro'
     }.get(account_id)
+    
 # Routes
+
+
+
+
+
 @app.route('/', methods=['GET', 'POST'])
 def create_media():
     if request.method == 'POST':
@@ -82,7 +82,7 @@ def create_media():
                 caption = request.form['caption']
                 hashtags = request.form['hashtags']
                 description = request.form['description']
-                conta_id = request.form['conta']
+                conta = request.form['conta']
 
                 hide_likes = request.form.get('hide_likes') == 'on'
                 hide_comments = request.form.get('hide_comments') == 'on'
@@ -95,7 +95,9 @@ def create_media():
                     'hide_likes': hide_likes,
                     'hide_comments': hide_comments
                 }
-
+                
+                conta_id = get_account_id(conta)
+                
                 if media_type == 'image':
                     media_params['image_url'] = media_url
                 elif media_type == 'video':
@@ -109,7 +111,7 @@ def create_media():
                     creation_id = response.json().get('id')
                     created_media_records.append({
                         'id': creation_id,
-                        'conta': request.form['conta'],
+                        'conta': conta,
                         'type': media_type,
                         'caption': caption,
                         'description': description,
@@ -125,6 +127,7 @@ def create_media():
         return redirect(url_for('create_media'))
 
     return render_template('create_media.html', created_media_records=created_media_records)
+
 
 @app.route('/publish-media/<media_id>/<conta>', methods=['POST'])
 def publish_media(media_id, conta):
@@ -171,56 +174,69 @@ def delete_media(media_id):
     flash(f'Mídia {media_id} excluída com sucesso.', 'success')
     return redirect(url_for('create_media'))
 
+
+
+
+
+
+
+
 @app.route('/carrocel', methods=['GET', 'POST'])
 def carrocel():
     media_ids = load_ids()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == "create":
+            try:
+                media_ids = load_ids()
+                media_url = request.form['media_url']
+                description = request.form.get('description', '')
+                media_type = request.form.get('type', '')
+                conta = request.form.get('conta', '')
+
+                if media_type not in ['image', 'video']:
+                   flash("Tipo de mídia inválido.", "danger")
+                   return redirect(url_for('carrocel'))
+
+                conta_id = get_account_id(conta)
+                if not conta_id:
+                   flash("Conta não reconhecida.", "danger")
+                   return redirect(url_for('carrocel'))
+
+                create_url = f'https://graph.facebook.com/v21.0/{conta_id}/media'
+                response = requests.post(create_url, data={
+                    'access_token': ACCESS_TOKEN,
+                    'is_carousel_item': 'true',
+                    'image_url' if media_type == 'image' else 'video_url': media_url
+                })
+               
+               
+                if response.status_code == 200:
+                    media_ids.append({
+                        'id': response.json().get('id'),
+                        'conta': conta,
+                        'description': description,
+                        'type': media_type
+                    })
+                    save_ids(media_ids)
+                    flash("Mídia adicionada ao carrossel com sucesso!", "success")
+                else:
+                    flash(f"Erro ao adicionar mídia: {response.text}", "danger")
+
+                return redirect(url_for('carrocel'))
+            except Exception as e:
+                flash(f'Erro: {str(e)}', 'danger')      
     return render_template('carrocel.html', created_media_records=media_ids)
 
-@app.route('/carrocel/add_image', methods=['POST'])
-def add_image():
-    media_ids = load_ids()
-    media_url = request.form['media_url']
-    description = request.form.get('description', '')
-    media_type = request.form.get('type', '')
-    conta = request.form.get('conta', '')
 
-    if media_type not in ['image', 'video']:
-        flash("Tipo de mídia inválido.", "danger")
-        return redirect(url_for('carrocel'))
-
-    conta_id = get_account_id(conta)
-    if not conta_id:
-        flash("Conta não reconhecida.", "danger")
-        return redirect(url_for('carrocel'))
-
-    create_url = f'https://graph.facebook.com/v21.0/{conta_id}/media'
-    response = requests.post(create_url, data={
-        'access_token': ACCESS_TOKEN,
-        'is_carousel_item': 'true',
-        'image_url' if media_type == 'image' else 'video_url': media_url
-    })
-
-    if response.status_code == 200:
-        media_ids.append({
-            'id': response.json().get('id'),
-            'conta': conta,
-            'description': description,
-            'type': media_type
-        })
-        save_ids(media_ids)
-        flash("Mídia adicionada ao carrossel com sucesso!", "success")
-    else:
-        flash(f"Erro ao adicionar mídia: {response.text}", "danger")
-
-    return redirect(url_for('carrocel'))
-
-@app.route('/carrocel/clear_ids', methods=['POST'])
+@app.route('/carrocel/deletar_lista', methods=['POST'])
 def clear_all_ids():
     clear_ids()
     flash("IDs limpos com sucesso!", "success")
     return redirect(url_for('carrocel'))
 
-@app.route('/carrocel/create', methods=['POST'])
+@app.route('/carrocel/criar_publicacao', methods=['POST'])
 def create_carousel():
     media_ids = load_ids()
     conta = request.form.get('conta')
@@ -237,18 +253,34 @@ def create_carousel():
         flash("Nenhuma mídia foi adicionada para esta conta.", "danger")
         return redirect(url_for('carrocel'))
 
-    response = retry_request(f'https://graph.facebook.com/v21.0/{conta_id}/media', {
+    # Criar o container de carrossel
+    container_url = f'https://graph.facebook.com/v21.0/{conta_id}/media'
+    container_data = {
         'access_token': ACCESS_TOKEN,
         'caption': f"{caption} {hashtags}",
         'media_type': 'CAROUSEL',
         'children': ",".join(filtered_media)
-    })
+    }
 
-    if response.status_code == 200:
+    container_response = retry_request(container_url, container_data)
+    if container_response.status_code != 200:
+        flash(f"Erro ao criar container do carrossel: {container_response.text}", "danger")
+        return redirect(url_for('carrocel'))
+
+    # Publicar o carrossel
+    container_id = container_response.json().get('id')
+    publish_url = f'https://graph.facebook.com/v21.0/{conta_id}/media_publish'
+    publish_data = {
+        'access_token': ACCESS_TOKEN,
+        'creation_id': container_id
+    }
+
+    publish_response = retry_request(publish_url, publish_data)
+    if publish_response.status_code == 200:
         flash("Carrossel criado e publicado com sucesso!", "success")
         clear_ids()
     else:
-        flash(f"Erro ao criar carrossel: {response.text}", "danger")
+        flash(f"Erro ao publicar carrossel: {publish_response.text}", "danger")
 
     return redirect(url_for('carrocel'))
 
@@ -256,3 +288,4 @@ def create_carousel():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+    """ app.run(host='127.0.0.1', port=port, debug=True) """

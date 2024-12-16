@@ -56,7 +56,7 @@
         {% endwith %}
 
         <!-- Formulário para criação de mídia -->
-        <form method="POST" action="/carrocel/add_image">
+        <form method="POST" action="/carrocel">
             <div class="form-group">
                 <label for="conta">Conta</label>
                 <select class="form-control" id="conta" name="conta" required>
@@ -81,7 +81,7 @@
                 <textarea class="form-control" id="description" name="description" rows="3"
                     placeholder="Descrição adicional (opcional)"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary mb-3">Adicionar Mídia</button>
+            <button type="submit" name="action" value="create" class="btn btn-primary mb-3">Adicionar Mídia</button>
         </form>
 
         <hr>
@@ -89,7 +89,7 @@
 
 
         <!-- Botão para criar e publicar o carrossel -->
-        <form method="POST" action="/carrocel/create">
+        <form method="POST" action="/carrocel/criar_publicacao">
             <div class="form-group">
                 <label for="conta">Conta</label>
                 <select class="form-control" id="conta" name="conta" required>
@@ -118,7 +118,7 @@
 
         </form>
         <div class="media-actions">
-            <form method="POST" action="/carrocel/clear_ids">
+            <form method="POST" action="/carrocel/deletar_lista">
                 <button type="submit" class="btn btn-danger">Excluir Carrocel</button>
             </form>
         </div>
