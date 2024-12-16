@@ -131,12 +131,12 @@ def create_media():
 
 @app.route('/publish-media/<media_id>/<conta>', methods=['POST'])
 def publish_media(media_id, conta):
-    account_name = get_account_name(conta)
-    if not account_name:
+    acount_id = get_account_id(conta)
+    if not acount_id:
         flash("Conta inválida.", "danger")
         return redirect(url_for('create_media'))
 
-    publish_url = f'https://graph.facebook.com/v21.0/{conta}/media_publish'
+    publish_url = f'https://graph.facebook.com/v21.0/{acount_id}/media_publish'
     response = requests.post(publish_url, params={
         'creation_id': media_id,
         'access_token': ACCESS_TOKEN
